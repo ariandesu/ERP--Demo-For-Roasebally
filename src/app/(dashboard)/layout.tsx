@@ -1,6 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { getCachedProfile } from '@/lib/supabase/server';
 import Sidebar from '@/components/sidebar';
 import { UserProfile } from '@/types';
 
@@ -9,21 +9,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, profile } = await getCachedProfile();
 
   if (!user) {
     redirect('/login');
   }
-
-  // Retrieve user permissions and profile from the database
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
 
   if (!profile || profile.status === 'inactive') {
     redirect('/login?error=account_disabled');

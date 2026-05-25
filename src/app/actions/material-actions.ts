@@ -1,23 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient as createServerSupabase } from '@/lib/supabase/server';
+import { createClient as createServerSupabase, getCachedProfile } from '@/lib/supabase/server';
 import { Material, SKU, MaterialCategory, MaterialUom } from '@/types';
 
 // Helper to assert current user has materials read access
 async function assertMaterialsAccess() {
-  const serverSupabase = await createServerSupabase();
-  const { data: { user } } = await serverSupabase.auth.getUser();
+  const { user, profile } = await getCachedProfile();
   
   if (!user) {
     throw new Error('Unauthenticated. Please log in to perform this action.');
   }
-
-  const { data: profile } = await serverSupabase
-    .from('profiles')
-    .select('role, status, materials_access')
-    .eq('id', user.id)
-    .single();
 
   if (!profile || profile.status === 'inactive' || !profile.materials_access) {
     throw new Error('Unauthorized. You do not have active Materials Master clearance permissions.');

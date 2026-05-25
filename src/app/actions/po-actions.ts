@@ -1,23 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient as createServerSupabase } from '@/lib/supabase/server';
+import { createClient as createServerSupabase, getCachedProfile } from '@/lib/supabase/server';
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus } from '@/types';
 
 // Helper to assert current user has purchase orders read access
 async function assertPurchaseOrdersAccess() {
-  const serverSupabase = await createServerSupabase();
-  const { data: { user } } = await serverSupabase.auth.getUser();
+  const { user, profile } = await getCachedProfile();
   
   if (!user) {
     throw new Error('Unauthenticated. Please log in to perform this action.');
   }
-
-  const { data: profile } = await serverSupabase
-    .from('profiles')
-    .select('role, status, purchase_orders_access')
-    .eq('id', user.id)
-    .single();
 
   if (!profile || profile.status === 'inactive' || !profile.purchase_orders_access) {
     throw new Error('Unauthorized. You do not have active Purchase Orders procurement permissions.');

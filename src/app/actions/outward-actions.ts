@@ -1,23 +1,16 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient as createServerSupabase } from '@/lib/supabase/server';
+import { createClient as createServerSupabase, getCachedProfile } from '@/lib/supabase/server';
 import { OutwardShipment, OutwardItem } from '@/types';
 
 // Helper to assert current user has goods outward read access
 async function assertOutwardAccess() {
-  const serverSupabase = await createServerSupabase();
-  const { data: { user } } = await serverSupabase.auth.getUser();
+  const { user, profile } = await getCachedProfile();
   
   if (!user) {
     throw new Error('Unauthenticated. Please log in to perform this action.');
   }
-
-  const { data: profile } = await serverSupabase
-    .from('profiles')
-    .select('role, status, goods_outward_access')
-    .eq('id', user.id)
-    .single();
 
   if (!profile || profile.status === 'inactive' || !profile.goods_outward_access) {
     throw new Error('Unauthorized. You do not have active Goods Outward dispatching permissions.');

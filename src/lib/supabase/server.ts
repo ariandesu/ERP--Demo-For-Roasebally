@@ -26,3 +26,26 @@ export async function createClient() {
     }
   );
 }
+
+// Request-lifecycle cached profile retriever to eliminate duplicate database/auth round-trips
+import { cache } from 'react';
+
+export const getCachedProfile = cache(async () => {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { user: null, profile: null };
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    return { user, profile };
+  } catch (error) {
+    console.error('getCachedProfile unexpected exception:', error);
+    return { user: null, profile: null };
+  }
+});
+
