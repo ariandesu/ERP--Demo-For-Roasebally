@@ -145,13 +145,17 @@ export default function Sidebar({ profile }: SidebarProps) {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group relative ${
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 group relative active:scale-[0.97] active:bg-sidebar-accent/70 ${
                 isActive
-                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+                  ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm pl-5'
                   : 'hover:bg-sidebar-accent text-slate-600 hover:text-blue-600'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+              {isActive && !collapsed && (
+                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full bg-white transition-all duration-300 animate-in fade-in zoom-in duration-200" />
+              )}
+              <Icon className={`w-4 h-4 shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
               {!collapsed && <span>{item.name}</span>}
               
               {/* Tooltip on collapse */}
@@ -237,14 +241,14 @@ export default function Sidebar({ profile }: SidebarProps) {
         <div className="fixed inset-0 z-50 flex md:hidden">
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300"
             onClick={() => setMobileOpen(false)}
           />
           {/* Sidebar Drawer */}
-          <div className="relative w-64 h-full flex flex-col slide-in-from-left duration-200">
+          <div className="relative w-64 h-full flex flex-col animate-in slide-in-from-left duration-300 ease-out shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg bg-sidebar-accent text-slate-500 hover:text-slate-800 z-50"
+              className="absolute top-4 right-4 p-1.5 rounded-lg bg-sidebar-accent text-slate-500 hover:text-slate-800 z-50 transition-transform active:scale-90"
             >
               <X className="w-4 h-4" />
             </button>
