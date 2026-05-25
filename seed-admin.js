@@ -50,7 +50,11 @@ async function seed() {
     });
 
     if (authError) {
-      if (authError.message.includes('already exists') || authError.message.includes('conflict')) {
+      if (
+        authError.message.includes('already exists') || 
+        authError.message.includes('conflict') || 
+        authError.message.includes('registered')
+      ) {
         console.log('\nResult: The account admin@rosebally.com already exists in your Supabase Auth.');
         
         // Try inserting profile in case user exists but profile was skipped/failed
