@@ -60,7 +60,13 @@ export async function middleware(request: NextRequest) {
 
   // 6. Logged-in users attempting to access auth pages (Login / Register): Redirect to Dashboard
   if (isPublicRoute) {
-    return NextResponse.redirect(new URL('/', request.url));
+    // Only redirect active users who actually have dashboard/home access.
+    // This prevents ERR_TOO_MANY_REDIRECTS loops for inactive or unauthorized accounts.
+    if (profile && profile.status === 'active' && profile.dashboard_access) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    // Fall through to let them see the public route with their error query params
+    return supabaseResponse;
   }
 
   // 7. Route and Module Level Authorization Guards
