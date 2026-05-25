@@ -47,11 +47,23 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 -- ==========================================
 -- 5. DEFINE RLS POLICIES FOR EXTRA SECURITY
 -- ==========================================
--- A. Read Access: Any authenticated user can read their own or others' profiles
-CREATE POLICY "Allow public read-access for authenticated profiles" 
+-- A. Read Access: Users can read their own profiles, while admins can read all profiles
+CREATE POLICY "Allow users to read their own profile" 
 ON public.profiles FOR SELECT 
 TO authenticated 
-USING (true);
+USING (id = auth.uid());
+
+CREATE POLICY "Allow administrative accounts to read all profiles" 
+ON public.profiles FOR SELECT 
+TO authenticated 
+USING (
+    EXISTS (
+        SELECT 1 FROM public.profiles 
+        WHERE profiles.id = auth.uid() 
+        AND profiles.role IN ('super_admin', 'admin')
+        AND profiles.status = 'active'
+    )
+);
 
 -- B. Write Access: Only administrative users or the server-side service role client can modify profiles
 CREATE POLICY "Allow write-access only for service_role and admin roles" 
