@@ -2,10 +2,14 @@ import React from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { UserProfile, ROLE_LABELS, ROLE_COLORS } from '@/types';
+import { UserProfile, ROLE_LABELS, ROLE_COLORS, Material, InwardShipment, OutwardShipment, PurchaseOrder } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DashboardCharts from '@/components/dashboard-charts';
+import { getMaterialsAction } from '@/app/actions/material-actions';
+import { getInwardShipmentsAction } from '@/app/actions/inward-actions';
+import { getOutwardShipmentsAction } from '@/app/actions/outward-actions';
+import { getPurchaseOrdersAction } from '@/app/actions/po-actions';
 import {
   LayoutDashboard,
   Package,
@@ -21,7 +25,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   Users,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  DollarSign,
 } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -46,6 +52,57 @@ export default async function DashboardPage() {
   }
 
   const userProfile = profile as UserProfile;
+
+  // ==========================================
+  // FETCH REAL DATA (with graceful error handling)
+  // ==========================================
+
+  let materialsList: Material[] = [];
+  let inwardList: InwardShipment[] = [];
+  let outwardList: OutwardShipment[] = [];
+  let poList: PurchaseOrder[] = [];
+
+  try {
+    const [fetchedMaterials, fetchedInward, fetchedOutward, fetchedPOs] = await Promise.all([
+      getMaterialsAction().catch(() => []),
+      getInwardShipmentsAction().catch(() => []),
+      getOutwardShipmentsAction().catch(() => []),
+      getPurchaseOrdersAction().catch(() => []),
+    ]);
+
+    materialsList = fetchedMaterials;
+    inwardList = fetchedInward;
+    outwardList = fetchedOutward;
+    poList = fetchedPOs;
+  } catch (error) {
+    console.error('Dashboard data loading error:', error);
+  }
+
+  // ==========================================
+  // COMPUTE REAL KPI METRICS
+  // ==========================================
+
+  let totalSKUs = 0;
+  let totalStockVolume = 0;
+  let lowStockAlerts = 0;
+
+  materialsList.forEach(m => {
+    (m.skus || []).forEach(s => {
+      totalSKUs++;
+      totalStockVolume += Number(s.quantity_on_hand);
+      if (s.alert_on_low_stock && Number(s.quantity_on_hand) <= Number(s.min_stock_level)) {
+        lowStockAlerts++;
+      }
+    });
+  });
+
+  const warehouseCapacity = 60000;
+  const occupancy = Math.min((totalStockVolume / warehouseCapacity) * 100, 100);
+
+  const activePOs = poList.filter(po => po.status === 'draft' || po.status === 'pending').length;
+  const pendingDelivery = poList.filter(po => po.status === 'pending').length;
+
+  const totalProcurementSpend = poList.reduce((sum, po) => sum + Number(po.total_amount), 0);
 
   // Configuration of available quick links
   const erpModules = [
@@ -117,20 +174,44 @@ export default async function DashboardPage() {
 
   const activeModules = erpModules.filter((module) => module.allowed);
 
-  // Elite Dashboard Metrics (Mock Data)
+  // Real KPI metrics computed from database
   const metrics = [
-    { title: 'Materials SKU Count', value: '1,424', change: '+12% this week', icon: Boxes, color: 'text-blue-600 bg-blue-50 border-blue-100' },
-    { title: 'Warehouse Occupancy', value: '68.4%', change: 'Normal utility rate', icon: Warehouse, color: 'text-blue-600 bg-blue-50 border-blue-100' },
-    { title: 'Active Purchase Orders', value: '42', change: '8 pending delivery', icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-    { title: 'Active Staff Terminals', value: '12', change: 'Live terminal synchronization', icon: Users, color: 'text-violet-600 bg-violet-50 border-violet-100' },
+    {
+      title: 'Materials SKU Count',
+      value: totalSKUs.toLocaleString(),
+      change: `${materialsList.length} parent materials`,
+      icon: Boxes,
+      color: 'text-blue-600 bg-blue-50 border-blue-100',
+    },
+    {
+      title: 'Warehouse Occupancy',
+      value: `${occupancy.toFixed(1)}%`,
+      change: `${totalStockVolume.toLocaleString()} of ${warehouseCapacity.toLocaleString()} units`,
+      icon: Warehouse,
+      color: occupancy > 85 ? 'text-rose-600 bg-rose-50 border-rose-100' : occupancy > 70 ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-blue-600 bg-blue-50 border-blue-100',
+    },
+    {
+      title: 'Active Purchase Orders',
+      value: activePOs.toString(),
+      change: `${pendingDelivery} pending delivery`,
+      icon: ShieldCheck,
+      color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+    },
+    {
+      title: 'Low Stock Alerts',
+      value: lowStockAlerts.toString(),
+      change: lowStockAlerts > 0 ? `${lowStockAlerts} SKUs below safety threshold` : 'All stock levels healthy',
+      icon: lowStockAlerts > 0 ? AlertTriangle : ShieldCheck,
+      color: lowStockAlerts > 0 ? 'text-rose-600 bg-rose-50 border-rose-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100',
+    },
   ];
 
   return (
     <div className="space-y-8">
-      
+
       {/* Dynamic Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-slate-200 shadow-sm rounded-xl">
-        
+
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">
@@ -175,8 +256,13 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {/* Visual Analytics Charts Section */}
-      <DashboardCharts />
+      {/* Visual Analytics Charts Section — Now with REAL data */}
+      <DashboardCharts
+        materials={materialsList}
+        inwardShipments={inwardList}
+        outwardShipments={outwardList}
+        purchaseOrders={poList}
+      />
 
       {/* Authorized Modules Panel */}
       <div className="space-y-4">

@@ -28,6 +28,61 @@ interface UserManagementClientProps {
   currentUserId: string;
 }
 
+const getRoleDefaultPermissions = (role: UserRole) => {
+  switch (role) {
+    case 'super_admin':
+    case 'admin':
+      return {
+        dashboard_access: true,
+        materials_access: true,
+        goods_inward_access: true,
+        goods_outward_access: true,
+        purchase_orders_access: true,
+        reports_access: true,
+        analytics_access: true,
+        settings_access: true,
+        user_management_access: true,
+      };
+    case 'warehouse_manager':
+      return {
+        dashboard_access: true,
+        materials_access: true,
+        goods_inward_access: true,
+        goods_outward_access: true,
+        purchase_orders_access: true,
+        reports_access: true,
+        analytics_access: true,
+        settings_access: false,
+        user_management_access: false,
+      };
+    case 'staff':
+      return {
+        dashboard_access: true,
+        materials_access: true,
+        goods_inward_access: true,
+        goods_outward_access: true,
+        purchase_orders_access: false,
+        reports_access: true,
+        analytics_access: false,
+        settings_access: false,
+        user_management_access: false,
+      };
+    case 'viewer':
+    default:
+      return {
+        dashboard_access: true,
+        materials_access: true,
+        goods_inward_access: false,
+        goods_outward_access: false,
+        purchase_orders_access: false,
+        reports_access: true,
+        analytics_access: true,
+        settings_access: false,
+        user_management_access: false,
+      };
+  }
+};
+
 export default function UserManagementClient({ initialUsers, currentUserId }: UserManagementClientProps) {
   const [users, setUsers] = useState<UserProfile[]>(initialUsers);
   const [search, setSearch] = useState('');
@@ -477,7 +532,15 @@ export default function UserManagementClient({ initialUsers, currentUserId }: Us
 
                 <div className="space-y-1.5">
                   <Label htmlFor="modal-role" className="text-slate-700 font-semibold">Operational Role</Label>
-                  <Select value={role} onValueChange={(val) => { if (val) setRole(val as UserRole); }}>
+                  <Select 
+                    value={role} 
+                    onValueChange={(val) => { 
+                      if (val) {
+                        setRole(val as UserRole);
+                        setPermissions(getRoleDefaultPermissions(val as UserRole));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="bg-slate-50 border-slate-200 text-slate-800 rounded-xl">
                       <SelectValue placeholder="Assign Role" />
                     </SelectTrigger>

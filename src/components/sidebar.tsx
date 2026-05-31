@@ -26,6 +26,7 @@ import {
   ChevronRight,
   ShieldCheck
 } from 'lucide-react';
+import { useCurrency } from '@/hooks/use-currency';
 
 interface SidebarProps {
   profile: UserProfile;
@@ -37,6 +38,7 @@ export default function Sidebar({ profile }: SidebarProps) {
   const supabase = createClient();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { currency, toggleCurrency } = useCurrency();
 
   const handleSignOut = async () => {
     try {
@@ -168,6 +170,47 @@ export default function Sidebar({ profile }: SidebarProps) {
           );
         })}
       </div>
+
+      {/* Global Currency Selector */}
+      {!collapsed ? (
+        <div className="px-4 py-3 border-t border-sidebar-border bg-slate-50/15">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Currency</span>
+            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 shadow-inner">
+              <button
+                onClick={() => currency === 'USD' && toggleCurrency()}
+                className={`px-2 py-1 rounded-md text-[10px] font-extrabold transition-all cursor-pointer ${
+                  currency === 'BDT'
+                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                ৳ TK
+              </button>
+              <button
+                onClick={() => currency === 'BDT' && toggleCurrency()}
+                className={`px-2 py-1 rounded-md text-[10px] font-extrabold transition-all cursor-pointer ${
+                  currency === 'USD'
+                    ? 'bg-white text-slate-800 shadow-sm border border-slate-200'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                $ USD
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="py-2.5 border-t border-sidebar-border flex flex-col items-center justify-center bg-slate-50/15">
+          <button
+            onClick={toggleCurrency}
+            className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-extrabold text-xs text-slate-700 hover:bg-white hover:text-blue-600 transition-all shadow-sm cursor-pointer"
+            title={`Switch to ${currency === 'BDT' ? 'USD ($)' : 'Taka (৳)'}`}
+          >
+            {currency === 'BDT' ? '৳' : '$'}
+          </button>
+        </div>
+      )}
 
       {/* User Information Profile Section */}
       <div className="p-3 border-t border-sidebar-border bg-sidebar-accent/35">

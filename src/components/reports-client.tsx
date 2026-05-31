@@ -13,6 +13,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Material, SKU, InwardShipment, OutwardShipment, PurchaseOrder, UserProfile } from '@/types';
+import { useCurrency } from '@/hooks/use-currency';
 
 interface ReportsClientProps {
   materials: Material[];
@@ -35,6 +36,7 @@ export default function ReportsClient({
   const [search, setSearch] = useState('');
   const [companyName, setCompanyName] = useState('ROSEBALLY GARMENT INDUSTRIES LTD');
   const [companyAddress, setCompanyAddress] = useState('Plot 124, Sector 7, Uttara, Dhaka, Bangladesh');
+  const { formatAmount } = useCurrency();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -289,7 +291,7 @@ export default function ReportsClient({
             <div className="space-y-1">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Stock Valuation</p>
               <h3 className="text-2xl font-extrabold text-slate-850">
-                ${stats.totalValuation.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {formatAmount(stats.totalValuation, { maximumFractionDigits: 2 })}
               </h3>
               <p className="text-[10px] text-slate-450 font-bold">
                 Live volume: <span className="font-extrabold text-slate-700">{stats.totalStockVolume.toLocaleString()} units</span>
@@ -736,12 +738,12 @@ export default function ReportsClient({
 
                         {/* Unit price */}
                         <TableCell className="text-right text-xs font-bold text-slate-700">
-                          ${Number(row.item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatAmount(Number(row.item.unit_price), { minimumFractionDigits: 2 })}
                         </TableCell>
 
                         {/* Subtotal */}
                         <TableCell className="text-right text-xs font-extrabold text-emerald-750">
-                          ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatAmount(subtotal, { minimumFractionDigits: 2 })}
                         </TableCell>
 
                         {/* PO Status */}

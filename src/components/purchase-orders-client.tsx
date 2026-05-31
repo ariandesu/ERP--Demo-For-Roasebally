@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Material, SKU, UserProfile } from '@/types';
 import { createPurchaseOrderAction, updatePurchaseOrderStatusAction, deletePurchaseOrderAction } from '@/app/actions/po-actions';
+import { useCurrency } from '@/hooks/use-currency';
 
 interface POClientProps {
   initialPOs: PurchaseOrder[];
@@ -47,6 +48,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
   const [statusFilter, setStatusFilter] = useState('all');
   const [expandedPOId, setExpandedPOId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const { currency, formatAmount } = useCurrency();
 
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);
@@ -411,7 +413,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
           <CardContent className="p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Value</p>
-              <h3 className="text-2xl font-extrabold text-slate-850">${stats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+              <h3 className="text-2xl font-extrabold text-slate-850">{formatAmount(stats.totalValue, { minimumFractionDigits: 2 })}</h3>
               <p className="text-[10px] text-emerald-650 font-bold">Total procurement spend</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-emerald-50/50 flex items-center justify-center text-emerald-650">
@@ -568,7 +570,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
 
                         {/* Value */}
                         <TableCell className="font-extrabold text-slate-800 text-xs">
-                          ${Number(po.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          {formatAmount(Number(po.total_amount), { minimumFractionDigits: 2 })}
                         </TableCell>
 
                         {/* Status dropdown or static badge based on permissions */}
@@ -672,12 +674,12 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
 
                                         {/* Unit Price */}
                                         <TableCell className="py-2 font-bold text-slate-700 text-right text-xs">
-                                          ${Number(item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                          {formatAmount(Number(item.unit_price), { minimumFractionDigits: 2 })}
                                         </TableCell>
 
                                         {/* Subtotal */}
                                         <TableCell className="py-2 font-extrabold text-slate-800 text-right text-xs">
-                                          ${subTotalVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                          {formatAmount(subTotalVal, { minimumFractionDigits: 2 })}
                                         </TableCell>
 
                                       </TableRow>
@@ -930,7 +932,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
 
                           {/* Unit price */}
                           <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-600">Unit Price ($) *</Label>
+                            <Label className="text-[10px] font-bold text-slate-600">Unit Price (TK ৳) *</Label>
                             <Input
                               type="number"
                               step="0.01"
@@ -946,7 +948,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
                           <div className="space-y-1">
                             <Label className="text-[10px] font-bold text-slate-400">Row Subtotal</Label>
                             <div className="border border-slate-100 rounded-xl h-9 text-xs font-extrabold text-slate-700 bg-slate-100/30 flex items-center px-3 justify-end">
-                              ${rowSubtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              {formatAmount(rowSubtotal, { minimumFractionDigits: 2 })}
                             </div>
                           </div>
 
@@ -960,7 +962,7 @@ export default function PurchaseOrdersClient({ initialPOs, materials, profile }:
                 {/* Live total aggregation bar */}
                 <div className="p-4 border border-emerald-100 rounded-2xl bg-emerald-50/30 flex justify-between items-center">
                   <span className="text-xs font-bold text-emerald-850 uppercase tracking-wide flex items-center gap-1"><Tag className="w-3.5 h-3.5" /> Total Estimated Order spend</span>
-                  <span className="text-lg font-extrabold text-emerald-700">${liveTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="text-lg font-extrabold text-emerald-700">{formatAmount(liveTotalAmount, { minimumFractionDigits: 2 })}</span>
                 </div>
 
                 {/* Footer Controls */}
